@@ -2,14 +2,19 @@ using UnityEngine;
 
 public class IA_Player : MonoBehaviour
 {
-    public float speed = 3.0f;           
-    public float attackSpeed = 4.0f;    
+    public float speed = 10.0f;           
+    public float attackSpeed = 12.0f;    
     public float attackDistanceY = 2.5f;  
     public Transform ball;                
-
     public float defenseY = 3.5f;
 
+    [Header("Limites de Movimentação da IA")]
+    public float minX = -3f; // Ajuste conforme a largura do seu campo
+    public float maxX = 3f;  // Ajuste conforme a largura do seu campo
+
     private Rigidbody2D rb2d;
+    private Vector3 targetPos;
+    private float currentSpeed;
 
     void Start()
     {
@@ -20,31 +25,41 @@ public class IA_Player : MonoBehaviour
     {
         if (ball == null) return;
 
-        Vector3 aiPos = transform.position;
-        Vector3 targetPos = aiPos;
-        
-        targetPos.x = ball.position.x;
+        // 1. Define a posição base
+        targetPos = transform.position;
 
-        if (ball.position.y > 0 && ball.position.y <= aiPos.y + attackDistanceY)
+        // 2. Trava o X da IA dentro dos limites jogáveis para evitar colisão contínua com a parede
+        targetPos.x = Mathf.Clamp(ball.position.x, minX, maxX);
+
+        // 3. Define a lógica de ataque ou defesa
+        if (ball.position.y > 0 && ball.position.y <= transform.position.y + attackDistanceY)
         {
             targetPos.y = ball.position.y;
-            MoveToTarget(targetPos, attackSpeed);
+            currentSpeed = attackSpeed;
         }
         else
         {
             targetPos.y = defenseY;
-            MoveToTarget(targetPos, speed);
+            currentSpeed = speed;
         }
     }
 
-    void MoveToTarget(Vector3 targetPos, float currentSpeed)
+    void FixedUpdate()
     {
-        Vector3 dir = targetPos - transform.position;
+        if (ball == null) return;
 
-        if (dir.magnitude > 0.1f)
+        // Aplica o movimento físico no tempo certo da física do Unity
+        MoveToTarget(targetPos, currentSpeed);
+    }
+
+    void MoveToTarget(Vector3 target, float speedToUse)
+    {
+        Vector2 difference = (Vector2)target - rb2d.position;
+
+        // Só move se a distância for relevante para evitar trepidação (jitter)
+        if (difference.magnitude > 0.1f)
         {
-            dir.Normalize();
-            rb2d.linearVelocity = dir * currentSpeed;
+            rb2d.linearVelocity = difference.normalized * speedToUse;
         }
         else
         {

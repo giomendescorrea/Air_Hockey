@@ -1,24 +1,24 @@
 using UnityEngine;
 
 public class Player : MonoBehaviour
-
 {
-    public float speed = 70.0f;             // Define a velocidade da raquete
+    public float speed = 25.0f;
     private Rigidbody2D rb2d;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        rb2d = GetComponent<Rigidbody2D>();     // Inicializa a raquete
+        rb2d = GetComponent<Rigidbody2D>();
     }
 
     void FixedUpdate()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 mouseScreenPos = Input.mousePosition;
+        mouseScreenPos.z = -Camera.main.transform.position.z;
+        Vector2 targetPosition = Camera.main.ScreenToWorldPoint(mouseScreenPos);
 
-        float clampedX = Mathf.Clamp(mousePos.x, -4.5f, 4.1f); 
-        float clampedY = Mathf.Clamp(mousePos.y, -8.0f, -0.5f); 
-
-        rb2d.MovePosition(new Vector2(clampedX, clampedY));
+        // Move o objeto em direção ao mouse através de velocidade (não atravessa paredes)
+        Vector2 newPosition = Vector2.MoveTowards(rb2d.position, targetPosition, speed * Time.fixedDeltaTime);
+        
+        rb2d.MovePosition(newPosition);
     }
 }
